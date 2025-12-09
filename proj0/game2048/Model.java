@@ -115,9 +115,9 @@ public class Model extends Observable {
        public static int nullRow;
     }
 
-    public Tile findDestination(int startCol, int startRow) {
+    public Tile findDestination(int startCol, int startRow, int prevMergeRow) {
         //从上往下找
-        for (int i = board.size() - 1; i > startRow; i -= 1) {
+        for (int i = prevMergeRow - 1; i > startRow; i -= 1) {
             Tile currTile = board.tile(startCol, i);
             if (currTile == null) {
                 nullTileInfoCollector.nullCol = startCol;
@@ -135,22 +135,23 @@ public class Model extends Observable {
         boolean changed;
         changed = false;
         board.setViewingPerspective(side);
-
+        // 存在的问题：当前
+        // 移动是可以的，向上merge是可以的
+        // 涉及到其他方向的 merge 就会乱
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
-        //i 是列 x，j 是行 y
-        //依次尝试向上格数的上限是递增的
         for (int i = 0; i < board.size(); i += 1) {
             //最上面一行永远不用检查
+            int prevMergeRow = board.size();
             for (int j = board.size() - 2; j >= 0; j -= 1) {
                 Tile t = board.tile(i, j);
                 //空格不必检查
                 if (t == null) {
                     continue;
                 }
-                Tile destinationTile = findDestination(i, j);
+                Tile destinationTile = findDestination(i, j, prevMergeRow);
 
                 if (destinationTile == null) {
                     board.move(nullTileInfoCollector.nullCol,nullTileInfoCollector.nullRow, t);
@@ -161,6 +162,7 @@ public class Model extends Observable {
                     int prevValue = t.value();
                     t = t.merge(i, j, destinationTile);
                     if (prevValue != t.value()) {
+                        prevMergeRow = destinationTile.row();
                         score += t.value();
                         changed = true;
                     }
@@ -170,17 +172,7 @@ public class Model extends Observable {
             }
         }
 
-        //TODO: 尚未完成，还需引入只能merge一次的机制，还有调整方向没有完成
-        //似乎完成了，让我们测试一下
-        /*
-        这是一个 case，会产生多次 merge：
-        2 16 2
-        2 2  4
-        4 2  8
-        8 4  2
-        可能的思路：
-        1. 如果上一次有 merge，下一次迭代上界直接在上一次 merge 的行数之下
-         */
+        //TODO: 还有调整方向没有完成
         //首先实现向上，然后将其作为 north 情况，泛化到各方向。
         //这里还原方向的代码的放置位置存疑
         board.setViewingPerspective(Side.NORTH);
