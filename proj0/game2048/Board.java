@@ -91,6 +91,18 @@ public class Board implements Iterable<Tile> {
         if (tile.col() == pcol && tile.row() == prow) {
             return false;
         }
+        //难点：move 只能用一次，必须一次到位，不能用 move 来检查 value
+        //考虑先检查 value，找到目标再一步到位
+        //流程：
+        //找目标(ok) -> board.move 检测是否要 merge(ok) -> 实现 merge
+
+        //xy 都相同：无事发生
+
+        //若 xy 不同：
+        //如果目标本来就是空的，直接移过去
+        //否则就是merge
+
+        //把目标位置的 tile 扣走了
         Tile tile1 = vtile(col, row, viewPerspective);
         values[tile.col()][tile.row()] = null;
 

@@ -88,6 +88,7 @@ public class Model extends Observable {
 
     /** Add TILE to the board. There must be no Tile currently at the
      *  same position. */
+    //只需要实现 tilt，所以它应该是没用了
     public void addTile(Tile tile) {
         board.addTile(tile);
         checkGameOver();
@@ -106,13 +107,83 @@ public class Model extends Observable {
      *    value, then the leading two tiles in the direction of motion merge,
      *    and the trailing tile does not.
      * */
+    /**
+     * 用于收集 null tile 的参数信息。
+     */
+   class nullTileInfoCollector {
+       public static int nullCol;
+       public static int nullRow;
+    }
+
+    public Tile findDestination(int startCol, int startRow) {
+        //从上往下找
+        for (int i = board.size() - 1; i > startRow; i -= 1) {
+            Tile currTile = board.tile(startCol, i);
+            if (currTile == null) {
+                nullTileInfoCollector.nullCol = startCol;
+                nullTileInfoCollector.nullRow = i;
+                return currTile;
+            } else if (currTile.value() == board.tile(startCol, startRow).value()) {
+                return currTile;
+            }
+        }
+        //最后肯定会找到自己，原地 TP
+        return board.tile(startCol, startRow);
+    }
+
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
+        board.setViewingPerspective(side);
 
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+
+        //i 是列 x，j 是行 y
+        //依次尝试向上格数的上限是递增的
+        for (int i = 0; i < board.size(); i += 1) {
+            //最上面一行永远不用检查
+            for (int j = board.size() - 2; j >= 0; j -= 1) {
+                Tile t = board.tile(i, j);
+                //空格不必检查
+                if (t == null) {
+                    continue;
+                }
+                Tile destinationTile = findDestination(i, j);
+
+                if (destinationTile == null) {
+                    board.move(nullTileInfoCollector.nullCol,nullTileInfoCollector.nullRow, t);
+                    changed = true;
+                    //产生移动
+                } else if (board.move(destinationTile.col(),destinationTile.row(), t)) {
+                    //实现 merge
+                    int prevValue = t.value();
+                    t = t.merge(i, j, destinationTile);
+                    if (prevValue != t.value()) {
+                        score += t.value();
+                        changed = true;
+                    }
+                    //检查 board 是否发生了改变。
+                    //改变：产生 2 种 merge 的其中一种，或产生移动->move
+                }
+            }
+        }
+
+        //TODO: 尚未完成，还需引入只能merge一次的机制，还有调整方向没有完成
+        //似乎完成了，让我们测试一下
+        /*
+        这是一个 case，会产生多次 merge：
+        2 16 2
+        2 2  4
+        4 2  8
+        8 4  2
+        可能的思路：
+        1. 如果上一次有 merge，下一次迭代上界直接在上一次 merge 的行数之下
+         */
+        //首先实现向上，然后将其作为 north 情况，泛化到各方向。
+        //这里还原方向的代码的放置位置存疑
+        board.setViewingPerspective(Side.NORTH);
 
         checkGameOver();
         if (changed) {

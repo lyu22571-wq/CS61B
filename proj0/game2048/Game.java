@@ -8,6 +8,7 @@ public class Game {
 
     /** Controller for a game represented by MODEL, using SOURCE as the
      *  the source of key inputs and random Tiles. */
+    //model 是机制，source 是随机数和键盘输入
     public Game(Model model, InputSource source) {
         _model = model;
         _source = source;
@@ -22,6 +23,7 @@ public class Game {
     /** Clear the board and play one game, until receiving a quit or
      *  new-game request.  Update the viewer with each added tile or
      *  change in the board from tilting. */
+    //游戏启动
     void playGame() {
         _model.clear();
         _model.addTile(getValidNewTile());
