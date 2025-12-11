@@ -94,7 +94,7 @@ public class Board implements Iterable<Tile> {
         //难点：move 只能用一次，必须一次到位，不能用 move 来检查 value
         //考虑先检查 value，找到目标再一步到位
         //流程：
-        //找目标(ok) -> board.move 检测是否要 merge(ok) -> 实现 merge
+        //找目标 -> board.move 检测是否要 merge -> 实现 merge
 
         //xy 都相同：无事发生
 

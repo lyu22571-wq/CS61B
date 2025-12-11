@@ -107,76 +107,42 @@ public class Model extends Observable {
      *    value, then the leading two tiles in the direction of motion merge,
      *    and the trailing tile does not.
      * */
-    /**
-     * 用于收集 null tile 的参数信息。
-     */
-   class nullTileInfoCollector {
-       public static int nullCol;
-       public static int nullRow;
-    }
-
-    public Tile findDestination(int startCol, int startRow, int prevMergeRow) {
-        //从上往下找
-        for (int i = prevMergeRow - 1; i > startRow; i -= 1) {
-            Tile currTile = board.tile(startCol, i);
-            if (currTile == null) {
-                nullTileInfoCollector.nullCol = startCol;
-                nullTileInfoCollector.nullRow = i;
-                return currTile;
-            } else if (currTile.value() == board.tile(startCol, startRow).value()) {
-                return currTile;
-            }
-        }
-        //最后肯定会找到自己，原地 TP
-        return board.tile(startCol, startRow);
-    }
-
     public boolean tilt(Side side) {
-        boolean changed;
-        changed = false;
+        boolean changed = false;
         board.setViewingPerspective(side);
-        // 存在的问题：当前
-        // 移动是可以的，向上merge是可以的
-        // 涉及到其他方向的 merge 就会乱
-        // TODO: Modify this.board (and perhaps this.score) to account
-        // for the tilt to the Side SIDE. If the board changed, set the
-        // changed local variable to true.
 
-        for (int i = 0; i < board.size(); i += 1) {
-            //最上面一行永远不用检查
-            int prevMergeRow = board.size();
-            for (int j = board.size() - 2; j >= 0; j -= 1) {
-                Tile t = board.tile(i, j);
-                //空格不必检查
+        for (int c = 0; c < board.size(); c += 1) {
+            int[] mergedRows = new int[board.size()];
+            for (int r = board.size() - 2; r >= 0; r--) {
+                Tile t = board.tile(c, r);
                 if (t == null) {
                     continue;
                 }
-                Tile destinationTile = findDestination(i, j, prevMergeRow);
 
-                if (destinationTile == null) {
-                    board.move(nullTileInfoCollector.nullCol,nullTileInfoCollector.nullRow, t);
-                    changed = true;
-                    //产生移动
-                } else if (board.move(destinationTile.col(),destinationTile.row(), t)) {
-                    //实现 merge
-                    int prevValue = t.value();
-                    t = t.merge(i, j, destinationTile);
-                    if (prevValue != t.value()) {
-                        prevMergeRow = destinationTile.row();
-                        score += t.value();
-                        changed = true;
+                int destRow = r;
+                for (int i = r + 1; i < board.size(); i++) {
+                    Tile destTile = board.tile(c, i);
+                    if (destTile == null) {
+                        destRow = i;
+                    } else if (destTile.value() == t.value() && mergedRows[i] == 0) {
+                        destRow = i;
+                        break;
+                    } else {
+                        break;
                     }
-                    //检查 board 是否发生了改变。
-                    //改变：产生 2 种 merge 的其中一种，或产生移动->move
+                }
+
+                if (destRow != r) {
+                    if (board.move(c, destRow, t)) {
+                        score += board.tile(c, destRow).value();
+                        mergedRows[destRow] = 1;
+                    }
+                    changed = true;
                 }
             }
         }
 
-        //TODO: 还有调整方向没有完成
-        //首先实现向上，然后将其作为 north 情况，泛化到各方向。
-        //这里还原方向的代码的放置位置存疑
         board.setViewingPerspective(Side.NORTH);
-
         checkGameOver();
         if (changed) {
             setChanged();
@@ -238,18 +204,11 @@ public class Model extends Observable {
         }
         for (int i = 0; i < b.size(); i += 1) {
             for (int j = 0; j < b.size(); j += 1) {
-                if (i < b.size() - 1 && j < b.size() -1) {
-                    if (b.tile(i, j).value() == b.tile(i + 1, j).value() || b.tile(i, j).value() == b.tile(i, j + 1).value()) {
-                        return true;
-                    }
-                } else if (i == b.size() - 1 && j < b.size() - 1) {
-                    if (b.tile(i, j).value() == b.tile(i, j + 1).value()) {
-                        return true;
-                    }
-                } else if (i < b.size() - 1 && j == b.size() - 1) {
-                    if (b.tile(i, j).value() == b.tile(i + 1, j).value()) {
-                        return true;
-                    }
+                if (i < b.size() - 1 && b.tile(i, j).value() == b.tile(i + 1, j).value()) {
+                    return true;
+                }
+                if (j < b.size() - 1 && b.tile(i, j).value() == b.tile(i, j + 1).value()) {
+                    return true;
                 }
             }
         }
