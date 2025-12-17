@@ -4,7 +4,7 @@ package deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class ArrayDeque<T> implements Iterable<T> {
+public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
     private T[]  items;
     private int size;
     private int nextFirst;
@@ -29,6 +29,7 @@ public class ArrayDeque<T> implements Iterable<T> {
         nextLast = size;
     }
 
+    @Override
     public void addFirst(T item) {
         if (size == items.length) {
             resize(size * 2);
@@ -38,6 +39,7 @@ public class ArrayDeque<T> implements Iterable<T> {
         size++;
     }
 
+    @Override
     public void addLast(T item) {
         if (size == items.length) {
             resize(size * 2);
@@ -47,14 +49,12 @@ public class ArrayDeque<T> implements Iterable<T> {
         size++;
     }
 
+    @Override
     public int size() {
         return size;
     }
 
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
+    @Override
     public void printDeque() {
         int current = (nextFirst + 1) % items.length;
         for (int i = 0; i < size; i++) {
@@ -67,6 +67,7 @@ public class ArrayDeque<T> implements Iterable<T> {
         System.out.println();
     }
 
+    @Override
     public T removeFirst() {
         if (isEmpty()) {
             return null;
@@ -83,6 +84,7 @@ public class ArrayDeque<T> implements Iterable<T> {
         return item;
     }
 
+    @Override
     public T removeLast() {
         if (isEmpty()) {
             return null;
@@ -99,6 +101,7 @@ public class ArrayDeque<T> implements Iterable<T> {
         return item;
     }
 
+    @Override
     public T get(int index) {
         if (index < 0 || index >= size) {
             return null;
